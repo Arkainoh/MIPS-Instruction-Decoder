@@ -1,6 +1,10 @@
 # MIPS-Instruction-Decoder
 
-#### USAGE:
+#### Abstraction:
+This program decodes an instruction and prints out several details.
+
+----
+#### Usage:
 Give a hexadecimal number as an argument to the program. <br>For example, 
 ```
 instdec 3c1d0000
@@ -28,6 +32,6 @@ aluop: 00
 alucontrol: 010
 jr: 0
 ```
-
+----
 #### Compiler:
 gcc version 5.4.0 (GCC)
