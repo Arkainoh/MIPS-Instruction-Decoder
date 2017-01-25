@@ -25,8 +25,8 @@ int main(int argc, char* argv[]) {
 	unsigned int opcode, rs, rt, rd, imm, funct, controls;
 	char* hexstring = argv[1];
 	char* instname;
-	unsigned int inst = (unsigned int) strtol(hexstring, NULL, 16);
-	printf("%d\n", (0b0010 & 2) >> 1);
+	unsigned int inst = (unsigned int) strtoll(hexstring, NULL, 16);
+
 	printBin(inst, 32);
 
 	opcode = inst >> 26;
@@ -49,10 +49,13 @@ int main(int argc, char* argv[]) {
 	rd = inst << 16 >> 27;
 	printf("rd: %u\n", rd);
 
-	imm = (int) inst << 16 >> 16; // sign extension
-	// imm = inst << 16 >> 16; // unsigned extension
+	if (controls & SIGNEXT) printf("haha");
+	if (controls & SIGNEXT)
+		imm = (int) inst << 16 >> 16; // sign extension
+	else 
+		imm = inst << 16 >> 16; // zero extension
 
-	printf("imm: %u\n", imm);
+	printf("imm: %08x\n", imm);
 	printBin(imm, 16);
 	return 0;
 }
