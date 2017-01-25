@@ -13,6 +13,7 @@
 #define ALUOP    0b00000000011
 
 void printBin(unsigned int num, int bit);
+int opcodeDecoder(unsigned int opcode, unsigned int* controls, char** instname);
 
 int main(int argc, char* argv[]) {
 
@@ -30,44 +31,10 @@ int main(int argc, char* argv[]) {
 
 	opcode = inst >> 26;
 	
-	// controls = {signext, shiftl16, regwrite, regdst, alusrc, branch, memwrite, memtoreg, jump, aluop} (11 bits)
+	if (opcodeDecoder(opcode, &controls, &instname) == 1) return 1;
 
-	switch(opcode) {
-		case 0b000000: controls = 0b00110000011; // R type
-			instname = "R type";
-			break;
-		case 0b100011: controls = 0b10101001000; // LW
-			instname = "LW";
-			break;
-		case 0b101011: controls = 0b10001010000; // SW
-			instname = "SW";
-			break;
-		case 0b000101: // BNE
-		case 0b000100: controls = 0b10000100001; // BEQ
-			instname = "BEQ / BNE";
-			break;
-		case 0b001000: 
-		case 0b001001: controls = 0b10101000000; // ADDI, ADDIU: only difference is exception
-			instname = "ADDI / ADDIU";
-			break;
-		case 0b001101: controls = 0b00101000010; // ORI
-			instname = "ORI";
-			break;
-		case 0b001111: controls = 0b01101000000; // LUI
-			instname = "LUI";
-			break;
-		case 0b000010: controls = 0b00000000100; // J
-			instname = "JUMP";
-			break;
-		case 0b000011: controls = 0b00100000100; // JAL
-			instname = "JAL";
-			break;
-		default: 
-			printf("<ERROR> Unknown Instruction\n");
-			return 1;
-	}
-
-	printf("%s\n", instname);
+	puts(instname);
+	printBin(controls, 11);
 	printf("opcode: %u\n", opcode);
 
 	funct = inst << 26 >> 26;
@@ -84,6 +51,7 @@ int main(int argc, char* argv[]) {
 
 	imm = (int) inst << 16 >> 16; // sign extension
 	// imm = inst << 16 >> 16; // unsigned extension
+
 	printf("imm: %u\n", imm);
 	printBin(imm, 16);
 	return 0;
@@ -96,4 +64,45 @@ void printBin(unsigned int num, int bit) {
 		printf("%d", n&1);
   	}
   	printf("\n");
+}
+
+int opcodeDecoder(unsigned int opcode, unsigned int* controls, char** instname) {
+	// controls = {signext, shiftl16, regwrite, regdst, alusrc, branch, memwrite, memtoreg, jump, aluop} (11 bits)
+
+	switch(opcode) {
+		case 0b000000: *controls = 0b00110000011; // R type
+			*instname = "R type";
+			break;
+		case 0b100011: *controls = 0b10101001000; // LW
+			*instname = "LW";
+			break;
+		case 0b101011: *controls = 0b10001010000; // SW
+			*instname = "SW";
+			break;
+		case 0b000101: // BNE
+		case 0b000100: *controls = 0b10000100001; // BEQ
+			*instname = "BEQ / BNE";
+			break;
+		case 0b001000: 
+		case 0b001001: *controls = 0b10101000000; // ADDI, ADDIU: only difference is exception
+			*instname = "ADDI / ADDIU";
+			break;
+		case 0b001101: *controls = 0b00101000010; // ORI
+			*instname = "ORI";
+			break;
+		case 0b001111: *controls = 0b01101000000; // LUI
+			*instname = "LUI";
+			break;
+		case 0b000010: *controls = 0b00000000100; // J
+			*instname = "JUMP";
+			break;
+		case 0b000011: *controls = 0b00100000100; // JAL
+			*instname = "JAL";
+			break;
+		default: 
+			printf("<ERROR> Unknown Instruction\n");
+			return 1;
+	}
+
+	return 0;
 }
