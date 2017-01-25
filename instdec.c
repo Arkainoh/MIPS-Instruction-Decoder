@@ -1,6 +1,17 @@
 ﻿#include <stdio.h>
 #include <stdlib.h>
 
+#define SIGNEXT  0b10000000000
+#define SHIFTL16 0b01000000000
+#define REGWRITE 0b00100000000
+#define REGDST   0b00010000000
+#define ALUSRC   0b00001000000
+#define BRANCH   0b00000100000
+#define MEMWRITE 0b00000010000
+#define MEMTOREG 0b00000001000
+#define JUMP     0b00000000100
+#define ALUOP    0b00000000011
+
 void printBin(unsigned int num, int bit);
 
 int main(int argc, char* argv[]) {
@@ -10,15 +21,42 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 	int i;
-	unsigned int opcode, rs, rt, rd, imm, funct, n;
+	unsigned int opcode, rs, rt, rd, imm, funct, controls;
 	char* hexstring = argv[1];
 	unsigned int inst = (unsigned int) strtol(hexstring, NULL, 16);
-
+	printf("%d\n", (0b0010 & 2) >> 1);
 	printBin(inst, 32);
 
 	opcode = inst >> 26;
 	printf("opcode: %u\n", opcode);
-	
+	// assign {signext, shiftl16, regwrite, regdst, alusrc, branch, memwrite, memtoreg, jump, aluop} = controls;
+	// controls (11 bits)
+	switch(opcode) {
+		case 0b000000: controls = 0b00110000011; // Rtype
+			break;
+		case 0b100011: controls = 0b10101001000; // LW
+			break;
+		case 0b101011: controls = 0b10001010000; // SW
+			break;
+		case 0b000101: // BNE
+		case 0b000100: controls = 0b10000100001; // BEQ
+			break;
+		case 0b001000: 
+		case 0b001001: controls = 0b10101000000; // ADDI, ADDIU: only difference is exception
+			break;
+		case 0b001101: controls = 0b00101000010; // ORI
+			break;
+		case 0b001111: controls = 0b01101000000; // LUI
+			break;
+		case 0b000010: controls = 0b00000000100; // J
+			break;
+		case 0b000011: controls = 0b00100000100; // JAL - added by Inho
+			break;
+		default: 
+			printf("<ERROR> Unknown Instruction\n");
+			return 1;
+	}
+
 	funct = inst << 26 >> 26;
 	printf("funct: %u\n", funct);
 
