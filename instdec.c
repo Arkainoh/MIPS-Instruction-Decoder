@@ -15,6 +15,7 @@
 void printBin(unsigned int num, int bit);
 int opcodeDecoder(unsigned int opcode, unsigned int *controls, char **instname);
 int aluDecoder(unsigned int funct, unsigned int aluop, unsigned int *alucontrol, unsigned int *jr, char **aluopname);
+void printControls(unsigned int controls, unsigned int alucontrol, unsigned int jr);
 
 int main(int argc, char* argv[]) {
 
@@ -39,19 +40,30 @@ int main(int argc, char* argv[]) {
 
 	if (aluDecoder(funct, aluop, &alucontrol, &jr, &aluopname) == 1) return 1;
 
-	printf("%s (ALU op: %s)\n", instname, aluopname);
+	printf("\n%s (ALU op: %s)\n", instname, aluopname);
 
-	printf("opcode: %u\n", opcode);
-	printf("funct: %u\n", funct);
+	printf("opcode: ");
+	printBin(opcode, 6);
+	printf(" (%u)\n", opcode);
+
+	printf("funct: ");
+	printBin(funct, 6);
+	printf(" (%u)\n", funct);
 
 	rs = inst << 6 >> 27;
-	printf("rs: %u\n", rs);
+	printf("rs: ");
+	printBin(rs, 5);
+	printf(" (%u)\n", rs);
 
 	rt = inst << 11 >> 27;
-	printf("rt: %u\n", rt);
+	printf("rt: ");
+	printBin(rt, 5);
+	printf(" (%u)\n", rt);
 
 	rd = inst << 16 >> 27;
-	printf("rd: %u\n", rd);
+	printf("rd: ");
+	printBin(rd, 5);
+	printf(" (%u)\n", rd);
 
 	if (controls & SIGNEXT)
 		imm = (int) inst << 16 >> 16; // sign extension
@@ -59,7 +71,9 @@ int main(int argc, char* argv[]) {
 		imm = inst << 16 >> 16; // zero extension
 
 	printf("imm: %08x\n", imm);
-	printBin(imm, 16);
+
+	printControls(controls, alucontrol, jr);
+
 	return 0;
 }
 
@@ -67,9 +81,9 @@ void printBin(unsigned int num, int bit) {
 	int i, n;
 	for (i = bit - 1; i >= 0; i--) { // print binary
 		n = num >> i;
-		printf("%d", n&1);
+		printf("%d", n & 1);
   	}
-  	printf("\n");
+
 }
 
 int opcodeDecoder(unsigned int opcode, unsigned int *controls, char **instname) {
@@ -162,5 +176,35 @@ int aluDecoder(unsigned int funct, unsigned int aluop, unsigned int *alucontrol,
     }
 
 	*jr = (funct == 0b001000) ? 1 : 0;
+
+}
+
+void printControls(unsigned int controls, unsigned int alucontrol, unsigned int jr) {
+	int signext, shiftl16, regwrite, regdst, alusrc, branch, memwrite, memtoreg, jump, aluop;
+
+	signext = (SIGNEXT & controls) ? 1 : 0;
+	shiftl16 = (SHIFTL16 & controls) ? 1 : 0;
+	regwrite = (REGWRITE & controls) ? 1 : 0;
+	regdst = (REGDST & controls) ? 1 : 0;
+	alusrc = (ALUSRC & controls) ? 1 : 0;
+	branch = (BRANCH & controls) ? 1 : 0;
+	memwrite = (MEMWRITE & controls) ? 1 : 0;
+	memtoreg = (MEMTOREG & controls) ? 1 : 0;
+	jump = (JUMP & controls) ? 1 : 0;
+	aluop = ALUOP & controls;
+	printf("signext: %d\n", signext);
+	printf("shiftl16: %d\n", shiftl16);
+	printf("regwrite: %d\n", regwrite);
+	printf("regdst: %d\n", regdst);
+	printf("alusrc: %d\n", alusrc);
+	printf("branch: %d\n", branch);
+	printf("memwrite: %d\n", memwrite);
+	printf("memtoreg: %d\n", memtoreg);
+	printf("jump: %d\n", jump);
+	printf("aluop: ");
+	printBin(aluop, 2);
+	printf("\nalucontrol: ");
+	printBin(alucontrol, 3);
+	printf("\njr: %d\n", jr);
 
 }
