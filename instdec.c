@@ -27,6 +27,7 @@ int main(int argc, char* argv[]) {
 	unsigned int opcode, rs, rt, rd, imm, funct, controls, aluop, alucontrol, jr;
 	char *hexstring = argv[1];
 	char *instname, *aluopname;
+	int aluDecoderErr;
 	unsigned int inst = (unsigned int) strtoll(hexstring, NULL, 16);
 
 	printBin(inst, 32);
@@ -34,13 +35,15 @@ int main(int argc, char* argv[]) {
 	opcode = inst >> 26;
 	funct = inst << 26 >> 26;
 
-	if (opcodeDecoder(opcode, &controls, &instname) == 1) return 1;
+	if (opcodeDecoder(opcode, &controls, &instname) == -1) return 1;
 	
 	aluop = controls & ALUOP;
 
-	if (aluDecoder(funct, aluop, &alucontrol, &jr, &aluopname) == 1) return 1;
+	if (aluDecoder(funct, aluop, &alucontrol, &jr, &aluopname) == -1) return 1;
+	jr = jr && (controls & REGDST);
 
-	printf("\n%s (ALU op: %s)\n", instname, aluopname);
+	if (jr) printf("\nJR\n");
+	else printf("\n%s (ALU op: %s)\n", instname, aluopname);
 
 	printf("opcode: ");
 	printBin(opcode, 6);
@@ -125,13 +128,15 @@ int opcodeDecoder(unsigned int opcode, unsigned int *controls, char **instname) 
 			break;
 		default: 
 			printf("<ERROR> Unknown Instruction\n");
-			return 1;
+			return -1;
 	}
 
 	return 0;
 }
 
 int aluDecoder(unsigned int funct, unsigned int aluop, unsigned int *alucontrol, unsigned int *jr, char **aluopname) {
+
+	*jr = 0;
 
     switch(aluop) {
 		case 0b00: *alucontrol = 0b010;  // add
@@ -169,14 +174,14 @@ int aluDecoder(unsigned int funct, unsigned int aluop, unsigned int *alucontrol,
 				case 0b101011: *alucontrol = 0b111; // SLTU
 					*aluopname = "SLTU";
 					break;
+				case 0b001000: // Maybe JR
+					*jr = 1;
+					break;
 				default:
 					printf("<ERROR> Unknown Instruction\n");
-					return 1;
+					return -1;
 	        }
     }
-
-	*jr = (funct == 0b001000) ? 1 : 0;
-
 }
 
 void printControls(unsigned int controls, unsigned int alucontrol, unsigned int jr) {
@@ -203,8 +208,10 @@ void printControls(unsigned int controls, unsigned int alucontrol, unsigned int 
 	printf("jump: %d\n", jump);
 	printf("aluop: ");
 	printBin(aluop, 2);
+
 	printf("\nalucontrol: ");
-	printBin(alucontrol, 3);
+	if (jr) printf("xxx");
+	else printBin(alucontrol, 3);
 	printf("\njr: %d\n", jr);
 
 }
